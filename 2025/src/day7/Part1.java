@@ -2,8 +2,7 @@ package day7;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Scanner;
 
 public class Part1 {
@@ -12,22 +11,27 @@ public class Part1 {
   public Part1() throws FileNotFoundException {
     long ans = 0;
     var scanner = new Scanner(file);
+    var start = scanner.nextLine();
+    var pos = new HashSet<Integer>();
+    pos.add(start.indexOf('S'));
     while (scanner.hasNextLine()) {
-      var line = scanner.nextLine().split(": ");
-      var test = Long.parseLong(line[0]);
-      var nums = Arrays.stream(line[1].split(" ")).map(Integer::parseInt).toList();
-      if (valid(test, nums, nums.get(0), 1)) {
-        ans += test;
+      var line = scanner.nextLine();
+      var next = new HashSet<Integer>();
+      for (int i = 0; i < line.length(); i++) {
+        if (line.charAt(i) == '.') {
+          if (pos.contains(i)) {
+            next.add(i);
+          }
+        } else if (line.charAt(i) == '^') {
+          if (pos.contains(i)) {
+            next.add(i - 1);
+            next.add(i + 1);
+            ans++;
+          }
+        }
       }
+      pos = next;
     }
     System.out.println(ans);
-  }
-
-  boolean valid(long target, List<Integer> nums, long curr, int i) {
-    if (i == nums.size()) {
-      return curr == target;
-    }
-    return valid(target, nums, curr + nums.get(i), i + 1)
-        || valid(target, nums, curr * nums.get(i), i + 1);
   }
 }

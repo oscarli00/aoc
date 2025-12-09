@@ -6,33 +6,57 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Part2 {
   private final File file = new File(getClass().getResource("input.txt").getPath());
 
+  private static final int[][] dirs = {
+    {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+  };
+
   public Part2() throws FileNotFoundException {
-    var puzzle = new ArrayList<List<Character>>();
+    var grid = new ArrayList<List<Character>>();
     var scanner = new Scanner(file);
     while (scanner.hasNextLine()) {
       var line = scanner.nextLine();
-      var charList = Arrays.stream(line.split("")).map(s -> s.charAt(0)).toList();
-      puzzle.add(charList);
+      var charList =
+          Arrays.stream(line.split(""))
+              .map(s -> s.charAt(0))
+              .collect(Collectors.toCollection(ArrayList::new));
+      grid.add(charList);
     }
 
     int ans = 0;
-    for (int i = 1; i < puzzle.size() - 1; i++) {
-      for (int j = 1; j < puzzle.get(0).size() - 1; j++) {
-        if (puzzle.get(i).get(j).equals('A')
-            && (puzzle.get(i - 1).get(j - 1).equals('M') && puzzle.get(i + 1).get(j + 1).equals('S')
-                || puzzle.get(i - 1).get(j - 1).equals('S')
-                    && puzzle.get(i + 1).get(j + 1).equals('M'))
-            && (puzzle.get(i + 1).get(j - 1).equals('M') && puzzle.get(i - 1).get(j + 1).equals('S')
-                || puzzle.get(i + 1).get(j - 1).equals('S')
-                    && puzzle.get(i - 1).get(j + 1).equals('M'))) {
-          ans++;
+    int removed;
+    do {
+      removed = 0;
+      for (int i = 0; i < grid.size(); i++) {
+        for (int j = 0; j < grid.get(i).size(); j++) {
+          if (!grid.get(i).get(j).equals('@')) {
+            continue;
+          }
+          int rolls = 0;
+          for (var d : dirs) {
+            int i2 = i + d[0];
+            int j2 = j + d[1];
+            if (i2 >= 0
+                && i2 < grid.size()
+                && j2 >= 0
+                && j2 < grid.get(i).size()
+                && grid.get(i2).get(j2).equals('@')) {
+              rolls++;
+            }
+          }
+          if (rolls < 4) {
+            removed++;
+            grid.get(i).set(j, '.');
+          }
         }
       }
-    }
+      ans += removed;
+    } while (removed > 0);
+
     System.out.println(ans);
   }
 }

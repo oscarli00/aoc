@@ -6,59 +6,66 @@ import java.util.*;
 
 public class Part2 {
   private final File file = new File(getClass().getResource("input.txt").getPath());
-  private final char[][] map = new char[50][];
-  private final Map<Character, List<int[]>> antennae = new HashMap<>();
+  int[] parent;
 
   public Part2() throws FileNotFoundException {
+    var boxes = new ArrayList<long[]>();
     var scanner = new Scanner(file);
-    int i = 0;
     while (scanner.hasNextLine()) {
       var line = scanner.nextLine();
-      map[i] = line.toCharArray();
-      for (int j = 0; j < line.length(); j++) {
-        char c = line.charAt(j);
-        if (c != '.') {
-          if (!antennae.containsKey(c)) {
-            antennae.put(c, new ArrayList<>());
-          }
-          antennae.get(c).add(new int[] {i, j});
-        }
-      }
-      i++;
+      var pos = line.split(",");
+      boxes.add(
+          new long[] {Long.parseLong(pos[0]), Long.parseLong(pos[1]), Long.parseLong(pos[2])});
     }
 
-    int ans = 0;
-    var visited = new boolean[map.length][map[0].length];
-    for (var positions : antennae.values()) {
-      for (i = 0; i < positions.size() - 1; i++) {
-        var pos1 = positions.get(i);
-        for (int j = i + 1; j < positions.size(); j++) {
-          var pos2 = positions.get(j);
-          var di = pos2[0] - pos1[0];
-          var dj = pos2[1] - pos1[1];
-          var pos3 = new int[] {pos1[0], pos1[1]};
-          while (pos3[0] >= 0 && pos3[1] >= 0 && pos3[0] < map.length && pos3[1] < map[0].length) {
-            if (!visited[pos3[0]][pos3[1]]) {
-              ans++;
-              map[pos3[0]][pos3[1]] = '#';
-              visited[pos3[0]][pos3[1]] = true;
-            }
-            pos3[0] -= di;
-            pos3[1] -= dj;
-          }
-          var pos4 = new int[] {pos2[0], pos2[1]};
-          while (pos4[0] >= 0 && pos4[1] >= 0 && pos4[0] < map.length && pos4[1] < map[0].length) {
-            if (!visited[pos4[0]][pos4[1]]) {
-              ans++;
-              map[pos4[0]][pos4[1]] = '#';
-              visited[pos4[0]][pos4[1]] = true;
-            }
-            pos4[0] += di;
-            pos4[1] += dj;
-          }
-        }
+    var pq = new PriorityQueue<long[]>(Comparator.comparingLong(a -> a[0]));
+    for (int i = 0; i < boxes.size(); i++) {
+      long x1 = boxes.get(i)[0];
+      long y1 = boxes.get(i)[1];
+      long z1 = boxes.get(i)[2];
+      for (int j = i + 1; j < boxes.size(); j++) {
+        long x2 = boxes.get(j)[0];
+        long y2 = boxes.get(j)[1];
+        long z2 = boxes.get(j)[2];
+        long dist = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1);
+        pq.add(new long[] {dist, i, j, x1, x2});
       }
     }
-    System.out.println(ans);
+
+    parent = new int[boxes.size()];
+    var components = new HashSet<Integer>();
+    for (int i = 0; i < parent.length; i++) {
+      components.add(i);
+      parent[i] = i;
+    }
+
+    long last = 0;
+    while (components.size() > 1) {
+      var connection = pq.poll();
+      int pi = find((int) connection[1]);
+      int pj = find((int) connection[2]);
+      if (pi != pj) {
+        union(pi, pj);
+        components.remove(pi);
+        last = connection[3] * connection[4];
+      }
+    }
+
+    System.out.println(last);
+  }
+
+  int find(int i) {
+    if (parent[i] == i) {
+      return i;
+    }
+    return parent[i] = find(parent[i]);
+  }
+
+  void union(int i, int j) {
+    int pi = find(i);
+    int pj = find(j);
+    if (pi != pj) {
+      parent[pi] = pj;
+    }
   }
 }
