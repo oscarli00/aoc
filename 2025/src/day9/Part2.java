@@ -64,7 +64,6 @@ public class Part2 {
           }
         }
         if (success) {
-          System.out.println(minCol + " " + minRow + " " + maxCol + " " + maxRow);
           ans = area;
         }
       }
@@ -74,7 +73,6 @@ public class Part2 {
 
   boolean withinBounds(long col, long row) {
     int intersections = 0;
-    // check if the point lies on a line
     for (var line : lineSegments) {
       // rows are the same -> horizontal line, check if point lies on the line
       if (line[1] == line[3]
@@ -92,15 +90,16 @@ public class Part2 {
         }
         // Ray Casting Algorithm
         // - project a ray from the point rightwards -> i.e. extend the col very far
-        // - count the number of vertical lines that the ray intersects with
+        // - count the number of vertical lines that the ray intersects with,
+        //   - if the ray passes exactly through the lower row boundary, count it as an intersection
+        //   - if the row passes exactly through the higher row boundary, ignore it
         // - if the number is odd, then the point is within bounds
         // - if the number is even, then the point is out of bounds
-        if (line[0] > col && (line[1] < row && row < line[3] || line[3] < row && row < line[1])) {
+        if (line[0] > col && (line[1] <= row && row < line[3] || line[3] <= row && row < line[1])) {
           intersections++;
         }
       }
     }
-
     return intersections % 2 == 1;
   }
 
@@ -114,5 +113,3 @@ public class Part2 {
     }
   }
 }
-
-// 34318488 too low
