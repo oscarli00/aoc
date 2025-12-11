@@ -10,6 +10,7 @@ public class Part2 {
   List<Node> nodes;
   List<long[]> lineSegments;
 
+  // this thing took like 15 minutes to run
   public Part2() throws FileNotFoundException {
     nodes = new ArrayList<>();
     var scanner = new Scanner(file);
