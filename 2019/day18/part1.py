@@ -57,6 +57,7 @@ if __name__ == "__main__":
             res = min(res, steps+dfs(i, j, mask | 1 << (ord(key)-ord("a"))))
         return res
 
+    # takes about 3 minutes
     print(dfs(start_row, start_col, 0))
 
     print(f"Elapsed time: {time.perf_counter()-start:.3f} seconds")
