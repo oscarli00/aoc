@@ -1,8 +1,17 @@
-from collections import deque
+from collections import defaultdict
 from functools import cache
 import time
 
 DIRS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+
+def index(c):
+    if c.islower():
+        return ord(c)-ord("a")
+    if c.isupper():
+        return ord(c)-ord("A")
+    raise Exception()
+
 
 if __name__ == "__main__":
     start = time.perf_counter()
@@ -15,49 +24,66 @@ if __name__ == "__main__":
         for j, c in enumerate(line):
             if c == "@":
                 start_row, start_col = i, j
-            elif "a" <= c and c <= "z":
-                keys.append(c)
-    target = (1 << len(keys))-1
+            elif c.islower():
+                keys.append((c, i, j))
 
-    def index(c):
-        if c >= "a" and c <= "z":
-            return ord(c)-ord("a")
-        if c >= "A" and c <= "Z":
-            return ord(c)-ord("A")
-        raise Exception()
+    paths = defaultdict(lambda: defaultdict(list))
+
+    def backtrack(i: int, j: int, source: str, target: str, steps: int, keys: int, doors: int, visited: set):
+        if grid[i][j] == target:
+            paths[source][target].append((steps, keys, doors))
+            paths[target][source].append((steps, keys, doors))
+            return
+        for d in DIRS:
+            di, dj, c = i+d[0], j+d[1], grid[i+d[0]][j+d[1]]
+            if c == "#" or (di, dj) in visited:
+                continue
+            visited.add((di, dj))
+            next_keys = keys
+            next_doors = doors
+            if c.islower():
+                next_keys |= 1 << (ord(c)-ord("a"))
+            elif c.isupper():
+                next_doors |= 1 << (ord(c)-ord("A"))
+            backtrack(di, dj, source, target, steps+1,
+                      next_keys, next_doors, visited)
+            visited.remove((di, dj))
+
+    # precompute distances between points of interest (starting position + keys)
+    for idx, (c1, i, j) in enumerate(keys):
+        backtrack(start_row, start_col, "@", c1, 0, 0, 0, set())
+        for (c2, _, _) in keys[idx+1:]:
+            backtrack(i, j, c1, c2, 0, 1 << (ord(c1)-ord("a")), 0, set())
+
+    for path in paths.values():
+        for list in path.values():
+            list.sort()
+
+    # for k, v in paths.items():
+    #     print(k, v)
+
+    TARGET = (1 << len(keys))-1
 
     @cache
-    def dfs(row, col, mask):
-        if mask == target:
+    def dfs(c1, mask):
+        if mask == TARGET:
             return 0
-        queue = deque()
-        visited = set()
-        dist = {}
-        queue.append((row, col))
-        visited.add((row, col))
-        curr = 0
-        while len(queue) > 0:
-            size = len(queue)
-            for _ in range(size):
-                i, j = queue.popleft()
-                c1 = grid[i][j]
-                if c1 >= "a" and c1 <= "z" and 1 << index(c1) & mask == 0:
-                    dist[c1] = (curr, i, j)
-                for d in DIRS:
-                    di, dj, c2 = i+d[0], j+d[1], grid[i+d[0]][j+d[1]]
-                    if (di, dj) in visited:
-                        continue
-                    visited.add((di, dj))
-                    if c2 != "#" and (c2 < "A" or c2 > "Z" or 1 << index(c2) & mask > 0):
-                        queue.append((di, dj))
-            curr += 1
-
         res = float("inf")
-        for key, (steps, i, j) in dist.items():
-            res = min(res, steps+dfs(i, j, mask | 1 << (ord(key)-ord("a"))))
+        for c2, list in paths[c1].items():
+            if c2 == "@":
+                continue
+            if 1 << index(c2) & mask > 0:
+                # key already picked up
+                continue
+            for (steps, keys, doors) in list:
+                if mask | doors != mask:
+                    # don't have the sufficient keys to open the required doors
+                    continue
+                res = min(res, steps+dfs(c2, mask | keys))
+                break
         return res
 
-    # takes about 3 minutes
-    print(dfs(start_row, start_col, 0))
+    # takes about 20 seconds
+    print(dfs("@", 0))
 
     print(f"Elapsed time: {time.perf_counter()-start:.3f} seconds")
