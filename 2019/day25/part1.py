@@ -121,3 +121,8 @@ if __name__ == "__main__":
             break
         command = input() + "\n"
         cpu.input([ord(c) for c in command])
+
+# - monolith
+# - astrolabe
+# - planetoid
+# - fuel cell
